@@ -21,6 +21,7 @@ contract FactoryProbe {
     }
 }
 
+/// forge-config: default.fuzz.runs = 1000
 contract HamsterTokenTest is Test {
     uint256 internal constant EXPECTED_SUPPLY = 1_000_000_000 * 1e18;
 
@@ -295,16 +296,28 @@ contract HamsterTokenTest is Test {
     // ---------------------------------------------------------------- fuzz
 
     function testFuzz_transferConservesSupply(address to, uint256 amount) public {
-        vm.assume(to != address(0));
+        to = address(uint160(bound(uint160(to), 1, type(uint160).max)));
         amount = bound(amount, 0, EXPECTED_SUPPLY);
         vm.prank(deployer);
         assertTrue(token.transfer(to, amount));
-        assertEq(token.balanceOf(to) + token.balanceOf(deployer), EXPECTED_SUPPLY);
+        if (to == deployer) {
+            // A self-transfer has only one account; summing it twice is not conservation.
+            assertEq(token.balanceOf(deployer), EXPECTED_SUPPLY);
+        } else {
+            assertEq(token.balanceOf(to), amount);
+            assertEq(token.balanceOf(deployer), EXPECTED_SUPPLY - amount);
+            assertEq(token.balanceOf(to) + token.balanceOf(deployer), EXPECTED_SUPPLY);
+        }
         assertEq(token.totalSupply(), EXPECTED_SUPPLY);
     }
 
+    function test_transferConservationIncludesDeployerAsRecipient() public {
+        testFuzz_transferConservesSupply(deployer, EXPECTED_SUPPLY);
+    }
+
     function testFuzz_transferAboveBalanceReverts(address from, uint256 amount) public {
-        vm.assume(from != deployer && from != address(0));
+        from = address(uint160(bound(uint160(from), 1, type(uint160).max)));
+        if (from == deployer) from = alice;
         amount = bound(amount, 1, type(uint256).max);
         vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, from, 0, amount));
         vm.prank(from);
@@ -336,8 +349,8 @@ contract HamsterTokenTest is Test {
     }
 
     function testFuzz_everyDeployerReceivesTheWholeSupply(address who) public {
-        vm.assume(who != address(0));
-        vm.assume(who.code.length == 0);
+        // Contract deployers are valid too: the launch factory is itself a contract.
+        who = address(uint160(bound(uint160(who), 1, type(uint160).max)));
         vm.prank(who);
         HamsterToken fresh = new HamsterToken();
         assertEq(fresh.totalSupply(), EXPECTED_SUPPLY);
