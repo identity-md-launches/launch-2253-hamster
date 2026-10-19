@@ -1,0 +1,24 @@
+{
+  "kind": "custom_token",
+  "token": {
+    "contract": "HamsterToken",
+    "name": "HAMSTER",
+    "symbol": "HAMSTER",
+    "decimals": 18,
+    "constructorArgs": [],
+    "totalSupply": "1000000000000000000000000000"
+  },
+  "contracts": [],
+  "pool": {
+    "pairedCurrency": "0xd34a99bc0f67ae1bbd63c660e6d0b0dd03e263b7",
+    "fee": 12500,
+    "tickSpacing": 60,
+    "initialPrice": "79228162514264337593543950336"
+  },
+  "economics": {
+    "poolBps": 5000,
+    "initialMarketCapWei": "2500000000000000000000",
+    "remainderTo": "0x3ed212257958724579f13b3dba74a07ac6007903"
+  },
+  "notes": "HamsterToken is a fixed-supply ERC-20 named HAMSTER with symbol HAMSTER and 18 decimals. Its parameterless constructor mints all 1,000,000,000 tokens once to msg.sender. It has no owner, additional minting, transfer fees, burn hooks, pause or blacklist functions. The pool initialPrice is provenance only; the deployer derives the opening price from economics.initialMarketCapWei and token.totalSupply."
+}
